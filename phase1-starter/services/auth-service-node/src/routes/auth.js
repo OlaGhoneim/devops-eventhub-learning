@@ -35,8 +35,9 @@ router.post('/login', async (req, res) => {
 
   // NOTE: token secret is read from the environment on purpose.
   const token = jwt.sign(
-    { sub: user.id, email: user.email },
-    process.env.JWT_SECERT, // <- seeded bug: typo'd env var name, see PHASE1
+    { sub: user.id, email: user.email},
+  process.env.JWT_SECRET,
+    // <- seeded bug: typo'd env var name, see PHASE1
     { expiresIn: '2h' }
   );
   res.json({ token });
