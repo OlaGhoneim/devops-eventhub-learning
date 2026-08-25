@@ -1,0 +1,198 @@
+services:
+
+  mysql:
+    image: docker.io/library/mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: eventhub_catalog
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: docker.io/library/postgres:16
+    environment:
+      POSTGRES_USER: eventhub
+      POSTGRES_PASSWORD: eventhub
+      POSTGRES_DB: eventhub_auth
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eventhub -d eventhub_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongodb:
+    image: docker.io/library/mongo:7
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: docker.io/library/redis:7
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: docker.io/library/rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  legacy-catalog:
+    build:
+      context: ./services/legacy-catalog-java
+      dockerfile: Containerfile
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/eventhub_catalog
+      DB_USERNAME: root
+      DB_PASSWORD: rootpassword
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  auth:
+    build:
+      context: ./services/auth-service-node
+      dockerfile: Containerfile
+    environment:
+      PORT: 8082
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: eventhub
+      PGPASSWORD: eventhub
+      PGDATABASE: eventhub_auth
+      JWT_SECRET: change-me-in-every-environment
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ai-insight:
+    build:
+      context: ./services/ai-insight-service-python
+      dockerfile: Containerfile
+    environment:
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+    ports:
+      - "8084:8084"
+
+  booking:
+    build:
+      context: ./services/booking-service-python
+      dockerfile: Containerfile
+    environment:
+      PORT: 8083
+      MONGO_URI: mongodb://mongodb:27017
+      MONGO_DB: eventhub_bookings
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_QUEUE: bookings
+      AI_INSIGHT_URL: http://ai-insight:8084
+    ports:
+      - "8083:8083"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ai-insight:
+        condition: service_started
+
+  notification-worker:
+    build:
+      context: ./services/notification-worker-go
+      dockerfile: Containerfile
+ 
+    restart: on-failure
+
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_QUEUE: bookings
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  analytics:
+    build:
+      context: ./services/analytics-service-python
+      dockerfile: Containerfile
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      BOOKING_SERVICE_URL: http://booking:8083
+      CATALOG_SERVICE_URL: http://legacy-catalog:8081
+      SNAPSHOT_KEY: analytics:snapshot
+    ports:
+      - "8085:8085"
+    depends_on:
+      redis:
+        condition: service_healthy
+      booking:
+        condition: service_started
+      legacy-catalog:
+        condition: service_started
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Containerfile
+    environment:
+      CATALOG_URL: http://legacy-catalog:8081
+      AUTH_URL: http://auth:8082
+      BOOKING_URL: http://booking:8083
+      AI_INSIGHT_URL: http://ai-insight:8084
+      ANALYTICS_URL: http://analytics:8085
+    ports:
+      - "8080:8080"
+    depends_on:
+      auth:
+        condition: service_started
+      booking:
+        condition: service_started
+      legacy-catalog:
+        condition: service_started
+      ai-insight:
+        condition: service_started
+      analytics:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Containerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      gateway:
+        condition: service_started
+
+volumes:
+  mysql-data:
+  postgres-data:
+  mongo-data:
+  redis-data:
+  rabbitmq-data:
