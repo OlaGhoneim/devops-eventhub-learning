@@ -1,8 +1,18 @@
 const express = require("express");
 const cors = require("cors");
 const { createProxyMiddleware } = require("http-proxy-middleware");
+
 const app = express();
+
 const PORT = 8080;
+
+const CATALOG_URL = process.env.CATALOG_URL || "http://localhost:8081";
+const AUTH_URL = process.env.AUTH_URL || "http://localhost:8082";
+const BOOKING_URL = process.env.BOOKING_URL || "http://localhost:8083";
+const AI_INSIGHT_URL =
+  process.env.AI_INSIGHT_URL || "http://localhost:8084";
+const ANALYTICS_URL =
+  process.env.ANALYTICS_URL || "http://localhost:8085";
 
 app.use(
   cors({
@@ -17,7 +27,7 @@ app.get("/health", (req, res) => {
 // Catalog -> 8081
 app.use(
   createProxyMiddleware({
-    target: "http://localhost:8081",
+    target: CATALOG_URL,
     changeOrigin: true,
     pathFilter: "/api/catalog",
   })
@@ -26,7 +36,7 @@ app.use(
 // Auth -> 8082
 app.use(
   createProxyMiddleware({
-    target: "http://localhost:8082",
+    target: AUTH_URL,
     changeOrigin: true,
     pathFilter: "/api/auth",
   })
@@ -35,7 +45,7 @@ app.use(
 // Booking -> 8083
 app.use(
   createProxyMiddleware({
-    target: "http://localhost:8083",
+    target: BOOKING_URL,
     changeOrigin: true,
     pathFilter: "/api/booking",
   })
@@ -44,7 +54,7 @@ app.use(
 // AI Insight -> 8084
 app.use(
   createProxyMiddleware({
-    target: "http://localhost:8084",
+    target: AI_INSIGHT_URL,
     changeOrigin: true,
     pathFilter: "/api/analyze",
   })
@@ -53,7 +63,7 @@ app.use(
 // Analytics -> 8085
 app.use(
   createProxyMiddleware({
-    target: "http://localhost:8085",
+    target: ANALYTICS_URL,
     changeOrigin: true,
     pathFilter: "/api/analytics",
   })

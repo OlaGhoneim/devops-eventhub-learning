@@ -85,9 +85,15 @@ podman build -t notification-worker:phase2 ./services/notification-worker-go
 podman build -t ai-insight-service:phase2 ./services/ai-insight-service-python
 podman build -t analytics-service:phase2 ./services/analytics-service-python
 
+echo "Building gateway image..."
+podman build -t gateway:phase2 ./gateway
+
+echo "Building frontend image..."
+podman build -t frontend:phase2 ./frontend
+
 echo "Starting services..."
 
-podman rm -f legacy-catalog auth booking notification-worker ai-insight analytics 2>/dev/null || true
+podman rm -f legacy-catalog auth booking notification-worker ai-insight analytics gateway frontend 2>/dev/null || true
 
 podman run -d \
   --name legacy-catalog \
@@ -163,6 +169,35 @@ podman run -d \
   analytics-service:phase2
 
 until curl -f http://localhost:8085/health >/dev/null 2>&1; do
+  sleep 2
+done
+
+echo "Starting gateway..."
+
+podman run -d \
+  --name gateway \
+  --network $NETWORK \
+  -e CATALOG_URL=http://legacy-catalog:8081 \
+  -e AUTH_URL=http://auth:8082 \
+  -e BOOKING_URL=http://booking:8083 \
+  -e AI_INSIGHT_URL=http://ai-insight:8084 \
+  -e ANALYTICS_URL=http://analytics:8085 \
+  -p 8080:8080 \
+  gateway:phase2
+
+until curl -f http://localhost:8080/health >/dev/null 2>&1; do
+  sleep 2
+done
+
+echo "Starting frontend..."
+
+podman run -d \
+  --name frontend \
+  --network $NETWORK \
+  -p 3000:80 \
+  frontend:phase2
+
+until curl -f http://localhost:3000 >/dev/null 2>&1; do
   sleep 2
 done
 
