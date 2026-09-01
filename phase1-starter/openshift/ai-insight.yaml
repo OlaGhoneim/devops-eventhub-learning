@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-insight
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-insight
+  template:
+    metadata:
+      labels:
+        app: ai-insight
+    spec:
+      containers:
+        - name: ai-insight
+          image: quay.io/20231232/eventhub-ai-insight:latest
+          ports:
+            - containerPort: 8084
+          env:
+            - name: PORT
+              value: "8084"
+            - name: OLLAMA_MODEL
+              value: llama3.2:1b
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-insight
+spec:
+  selector:
+    app: ai-insight
+  ports:
+    - port: 8084
+      targetPort: 8084

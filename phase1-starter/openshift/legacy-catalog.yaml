@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-catalog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: legacy-catalog
+  template:
+    metadata:
+      labels:
+        app: legacy-catalog
+    spec:
+      containers:
+        - name: legacy-catalog
+          image: quay.io/20231232/eventhub-legacy-catalog:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: DB_URL
+              value: jdbc:mysql://mysql:3306/eventhub_catalog
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: rootpassword
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: legacy-catalog
+spec:
+  selector:
+    app: legacy-catalog
+  ports:
+    - port: 8081
+      targetPort: 8081

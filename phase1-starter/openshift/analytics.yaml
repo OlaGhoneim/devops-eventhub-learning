@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics
+  template:
+    metadata:
+      labels:
+        app: analytics
+    spec:
+      containers:
+        - name: analytics
+          image: quay.io/20231232/eventhub-analytics:latest
+          ports:
+            - containerPort: 8085
+          env:
+            - name: PORT
+              value: "8085"
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+            - name: BOOKING_SERVICE_URL
+              value: http://booking:8083
+            - name: CATALOG_SERVICE_URL
+              value: http://legacy-catalog:8081
+            - name: SNAPSHOT_KEY
+              value: analytics:snapshot
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics
+spec:
+  selector:
+    app: analytics
+  ports:
+    - port: 8085
+      targetPort: 8085
