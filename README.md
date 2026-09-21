@@ -68,12 +68,6 @@ oc describe pod <POD_NAME>  # debug pod issues
 oc delete project event-booking-app   # tear down when done
 ```
 
-## Notes
-
-- Database/persistent storage: *(fill in — e.g. OpenShift PersistentVolumeClaim, or external managed DB)*
-- Environment variables/secrets: *(fill in — e.g. via `oc create secret` or ConfigMap)*
-- Replicas / scaling: *(fill in if configured)*
-
 ## Related Commit
 
 [Deploy EventHub application to OpenShift](https://github.com/OlaGhoneim/Devops-event-booking-system/commit/0b77999ec4ed39e8da55e6e708a925b5f03c911b)
