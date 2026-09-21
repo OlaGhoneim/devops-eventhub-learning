@@ -11,12 +11,12 @@ This repository documents a 4-phase DevOps assignment that progressively contain
 
 ## Project Phases
 
-| Phase | Description | Reference |
-|-------|-------------|-----------|
-| **Phase 1** | Build the application to run without containers or Docker — a plain baseline setup | `event-booking-app/` |
-| **Phase 2** | Containerize the application using **Podman** | [Complete Phase 2 containerization with Podman](https://github.com/OlaGhoneim/Devops-event-booking-system/commit/f94f5e08ee8306b18ee86542be18c41dbbae3a8) |
-| **Phase 3** | Add **Docker Compose** orchestration for multi-service coordination | Add Docker Compose orchestration for Phase 3 |
-| **Phase 4** | Deploy the application to **OpenShift** | [Deploy EventHub application to OpenShift](https://github.com/OlaGhoneim/Devops-event-booking-system/commit/0b77999ec4ed39e8da55e6e708a925b5f03c911b) |
+| Phase | Description |
+|-------|-------------|
+| **Phase 1** | Build the application to run without containers or Docker — a plain baseline setup |
+| **Phase 2** | Containerize the application using **Podman** |
+| **Phase 3** | Add **Docker Compose** orchestration for multi-service coordination |
+| **Phase 4** | Deploy the application to **OpenShift** |
 
 ## Repository Structure
 
