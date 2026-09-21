@@ -20,12 +20,7 @@ public class CatalogController {
     public List<CatalogEvent> listAll() {
         return repository.findAll();
     }
-   
-   
-   @GetMapping("/health")
-   public String health() {
-     return "ok";
-   }
+
     @GetMapping("/{id}")
     public Optional<CatalogEvent> getOne(@PathVariable Long id) {
         return repository.findById(id);
