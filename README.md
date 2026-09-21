@@ -35,10 +35,7 @@ podman stop event-booking-app    # stop the container
 podman rm event-booking-app      # remove the container
 ```
 
-## Notes
 
-- Environment variables (if any): list them here, e.g. `DB_HOST`, `DB_PORT`
-- Base image used: *(fill in, e.g. `python:3.11-slim`, `node:20-alpine`)*
 
 ## Related Commit
 
